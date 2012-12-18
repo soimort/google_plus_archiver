@@ -1,0 +1,69 @@
+#!/usr/bin/env ruby
+
+$LOAD_PATH.unshift File.dirname(__FILE__) + "/../lib"
+
+require 'google_plus_archiver'
+require 'google_plus_archiver/version.rb'
+
+require 'optparse'
+
+options = {}
+OptionParser.new do |opts|
+  opts.banner = "Usage: gplus-get -a [API_KEY] -u [USER_ID]"
+  
+  opts.on("--api-key [API_KEY]", "Specify the Google API key") do |api_key|
+    options[:api_key] = api_key
+  end
+  
+  opts.on("--user-id [USER_ID]" ,"Specify the ID of the user to be archived") do |user_id|
+    options[:user_id] = user_id
+  end
+  
+  opts.on("--delay [SECONDS]" ,"Delay (in seconds) between two requests (0.2 by default, since Google set a 5 requests/second/user limit)") do |delay|
+    options[:delay] = delay
+  end
+  
+  opts.on("--output-path [OUTPUT_PATH]" ,"Output path (the current directory by default)") do |output_path|
+    options[:output_path] = output_path
+  end
+  
+  opts.on("--quiet", "Silent mode") do
+    options[:quiet] = true
+  end
+  
+  opts.on("--exclude-posts", "Don't archive posts") do
+    options[:exclude_posts] = true
+  end
+  
+  opts.on("--exclude-attachments", "Don't archive attachments") do
+    options[:exclude_attachments] = true
+  end
+  
+  opts.on("--exclude-replies", "Don't archive replies") do
+    options[:exclude_replies] = true
+  end
+  
+  opts.on("--exclude-plusoners", "Don't archive plusoners") do
+    options[:exclude_plusoners] = true
+  end
+  
+  opts.on("--exclude-resharers", "Don't archive resharers") do
+    options[:exclude_resharers] = true
+  end
+  
+  opts.on("--version", "Display current version") do
+    puts "google_plus_archiver #{GooglePlusArchiver::VERSION}"
+    exit 0
+  end
+  
+end.parse!
+
+if not options[:api_key] or not options[:user_id]
+  puts "You must specify both the user ID (-u) and your Google API key (-a)."
+  exit 0
+end
+
+GooglePlusArchiver::register_client(options[:api_key])
+if GooglePlusArchiver::client_registered?
+  GooglePlusArchiver::archive_user(options)
+end
