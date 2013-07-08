@@ -132,8 +132,14 @@ module GooglePlusArchiver
                 item['object']['attachments'].each do |attachment|
                   image = (attachment['fullImage'] or attachment['image'])
                   if image
-                    puts "##{@@request_num}     Fetching attachment: #{image['url']} ..." unless quiet
-                    uri = URI.parse(URI.escape("#{image['url']}"))
+                    if attachment['fullImage'] and not attachment['fullImage']['url'] =~ /\/s0-d\/[^\/]+$/
+                      image_url = image['url'][0..image['url'].rindex('/')] + 's0-d' + image['url'][image['url'].rindex('/')..-1]
+                    else
+                      image_url = image['url']
+                    end
+                    
+                    puts "##{@@request_num}     Fetching attachment: #{image_url} ..." unless quiet
+                    uri = URI.parse(URI.escape("#{image_url}"))
                     http = Net::HTTP.new(uri.host, uri.port)
                     if http.port == 443
                       http.use_ssl = true
