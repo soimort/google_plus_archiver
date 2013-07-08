@@ -58,14 +58,23 @@ module GooglePlusArchiver
         
         #>> profile
         puts "##{@@request_num+=1} Fetching people.get ..." unless quiet
-        response = @@client.execute(
-          :api_method => @@plus.people.get,
-          :parameters => {
-            'collection' => 'public',
-            'userId' => user_id
-          },
-          :authenticated => false
-        )
+        loop do
+          begin
+            response = @@client.execute(
+              :api_method => @@plus.people.get,
+              :parameters => {
+                'collection' => 'public',
+                'userId' => user_id
+              },
+              :authenticated => false
+            )
+          rescue
+            puts "##{@@request_num} Retrying people.get ..." unless quiet
+            next
+          else
+            break
+          end
+        end
         
         #<< profile
         File.open("#{tmp_dir}/profile.json", "w") do |f|
@@ -80,16 +89,26 @@ module GooglePlusArchiver
           page_num = 0
           loop do
             puts "##{@@request_num+=1} Fetching activities.list: page[#{page_num}] ..." unless quiet
-            response = @@client.execute(
-              :api_method => @@plus.activities.list,
-              :parameters => {
-                'collection' => 'public',
-                'userId' => user_id,
-                'maxResults' => '100',
-                'pageToken' => next_page_token
-              },
-              :authenticated => false
-            )
+            loop do
+              begin
+                response = @@client.execute(
+                  :api_method => @@plus.activities.list,
+                  :parameters => {
+                    'collection' => 'public',
+                    'userId' => user_id,
+                    'maxResults' => '100',
+                    'pageToken' => next_page_token
+                  },
+                  :authenticated => false
+                )
+              rescue
+                puts "##{@@request_num} Retrying activities.list: page[#{page_num}] ..." unless quiet
+                next
+              else
+                break
+              end
+            end
+            
             activities = JSON.parse(response.body)
             next_page_token = activities['nextPageToken']
             
@@ -157,15 +176,25 @@ module GooglePlusArchiver
                 replies_page_num = 0
                 loop do
                   puts "##{@@request_num+=1}     Fetching comments.list: page[#{replies_page_num}] ..." unless quiet
-                  response = @@client.execute(
-                    :api_method => @@plus.comments.list,
-                    :parameters => {
-                      'activityId' => activity_id,
-                      'maxResults' => '500',
-                      'pageToken' => replies_next_page_token
-                    },
-                    :authenticated => false
-                  )
+                  loop do
+                    begin
+                      response = @@client.execute(
+                        :api_method => @@plus.comments.list,
+                        :parameters => {
+                          'activityId' => activity_id,
+                          'maxResults' => '500',
+                          'pageToken' => replies_next_page_token
+                        },
+                        :authenticated => false
+                      )
+                    rescue
+                      puts "##{@@request_num}     Retrying comments.list: page[#{replies_page_num}] ..." unless quiet
+                      next
+                    else
+                      break
+                    end
+                  end
+                  
                   replies_next_page_token = JSON.parse(response.body)['nextPageToken']
                   
                   #<< replies
@@ -185,16 +214,26 @@ module GooglePlusArchiver
                 plusoners_page_num = 0
                 loop do
                   puts "##{@@request_num+=1}     Fetching people.listByActivity(plusoners): page[#{plusoners_page_num}] ..." unless quiet
-                  response = @@client.execute(
-                    :api_method => @@plus.people.list_by_activity,
-                    :parameters => {
-                      'activityId' => activity_id,
-                      'collection' => 'plusoners',
-                      'maxResults' => '100',
-                      'pageToken' => plusoners_next_page_token
-                    },
-                    :authenticated => false
-                  )
+                  loop do
+                    begin
+                      response = @@client.execute(
+                        :api_method => @@plus.people.list_by_activity,
+                        :parameters => {
+                          'activityId' => activity_id,
+                          'collection' => 'plusoners',
+                          'maxResults' => '100',
+                          'pageToken' => plusoners_next_page_token
+                        },
+                        :authenticated => false
+                      )
+                    rescue
+                      puts "##{@@request_num}     Retrying people.listByActivity(plusoners): page[#{plusoners_page_num}] ..." unless quiet
+                      next
+                    else
+                      break
+                    end
+                  end
+                  
                   plusoners_next_page_token = JSON.parse(response.body)['nextPageToken']
                   
                   #<< plusoners
@@ -214,16 +253,26 @@ module GooglePlusArchiver
                 resharers_page_num = 0
                 loop do
                   puts "##{@@request_num+=1}     Fetching people.listByActivity(resharers): page[#{resharers_page_num}] ..." unless quiet
-                  response = @@client.execute(
-                    :api_method => @@plus.people.list_by_activity,
-                    :parameters => {
-                      'activityId' => activity_id,
-                      'collection' => 'resharers',
-                      'maxResults' => '100',
-                      'pageToken' => resharers_next_page_token
-                    },
-                    :authenticated => false
-                  )
+                  loop do
+                    begin
+                      response = @@client.execute(
+                        :api_method => @@plus.people.list_by_activity,
+                        :parameters => {
+                          'activityId' => activity_id,
+                          'collection' => 'resharers',
+                          'maxResults' => '100',
+                          'pageToken' => resharers_next_page_token
+                        },
+                        :authenticated => false
+                      )
+                    rescue
+                      puts "##{@@request_num}     Retrying people.listByActivity(resharers): page[#{resharers_page_num}] ..." unless quiet
+                      next
+                    else
+                      break
+                    end
+                  end
+                  
                   resharers_next_page_token = JSON.parse(response.body)['nextPageToken']
                   
                   #<< resharers
