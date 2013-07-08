@@ -24,7 +24,7 @@ module GooglePlusArchiver
   end
   
   def self.register_client(api_key)
-    @@client = Google::APIClient.new
+    @@client = Google::APIClient.new(:application_name => 'GooglePlusArchiver', :application_version => VERSION)
     @@api_key = @@client.key = api_key
     @@request_num = 0
     begin
