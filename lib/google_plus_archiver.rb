@@ -53,8 +53,8 @@ module GooglePlusArchiver
       (params[:quiet])
     
     Dir.mktmpdir do |tmp_dir|
-      
       begin
+        response = nil
         
         #>> profile
         puts "##{@@request_num+=1} Fetching people.get ..." unless quiet
@@ -323,15 +323,9 @@ module GooglePlusArchiver
               gz.orig_name = tar.path
               gz.write IO.binread(tar.path)
             end
-            
           end
-          
         end
-        
       end
-      
     end
-    
   end
-  
 end
