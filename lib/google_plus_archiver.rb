@@ -38,6 +38,20 @@ module GooglePlusArchiver
     defined? @@plus
   end
   
+  def self.get_full_image_url(url)
+    if url =~ /https:\/\/\w+\.googleusercontent\.com/
+      if url =~ /\/s\d+\/[^\/]+$/ or url =~ /\/w\d+-h\d+\/[^\/]+$/ or url =~ /\/w\d+-h\d+-\w+\/[^\/]+$/
+        url[0..url[0..(url.rindex('/') - 1)].rindex('/')] + 's0-d' + url[url.rindex('/')..-1]
+      elsif url =~ /\/photo.jpg$/ and not url =~ /\/s0-d\/[^\/]+$/
+        url[0..url.rindex('/')] + 's0-d' + url[url.rindex('/')..-1]
+      else
+        url
+      end
+    else
+      url
+    end
+  end
+  
   def self.archive_user(params)
     begin
       raise "Unregistered client." unless client_registered?
@@ -139,14 +153,70 @@ module GooglePlusArchiver
               #>> attachments
               if not params[:exclude_attachments] and item['object']['attachments']
                 item['object']['attachments'].each do |attachment|
-                  image = (attachment['fullImage'] or attachment['image'])
-                  if image
-                    if attachment['fullImage'] and not attachment['fullImage']['url'] =~ /\/s0-d\/[^\/]+$/
-                      image_url = image['url'][0..image['url'].rindex('/')] + 's0-d' + image['url'][image['url'].rindex('/')..-1]
-                    else
-                      image_url = image['url']
+                  if attachment['objectType'] == 'photo'
+                    # Download full-size image
+                    begin
+                      image = attachment['fullImage']
+                      image_url = get_full_image_url(image['url'])
+                      puts "##{@@request_num}     Fetching attachment: #{image_url} ..." unless quiet
+                      uri = URI.parse(URI.escape("#{image_url}"))
+                      http = Net::HTTP.new(uri.host, uri.port)
+                      if http.port == 443
+                        http.use_ssl = true
+                        http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+                      end
+                      data = http.get(uri.request_uri)
+                      image_ext = uri.request_uri.split("/")[-1].split(".")[-1]
+                      image_ext = nil if image_ext.length > 4
+                      
+                      #<< attachment
+                      File.open("#{tmp_dir}/#{activity_id}_#{attachment['id']}#{image_ext ? ".#{image_ext}" : ""}", "w").puts data.body
+                    rescue
+                      image = attachment['image']
+                      image_url = get_full_image_url(image['url'])
+                      puts "##{@@request_num}     Fetching attachment: #{image_url} ..." unless quiet
+                      uri = URI.parse(URI.escape("#{image_url}"))
+                      http = Net::HTTP.new(uri.host, uri.port)
+                      if http.port == 443
+                        http.use_ssl = true
+                        http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+                      end
+                      data = http.get(uri.request_uri)
+                      image_ext = uri.request_uri.split("/")[-1].split(".")[-1]
+                      image_ext = nil if image_ext.length > 4
+                      
+                      #<< attachment
+                      File.open("#{tmp_dir}/#{activity_id}_#{attachment['id']}#{image_ext ? ".#{image_ext}" : ""}", "w").puts data.body
                     end
                     
+                  elsif attachment['objectType'] == 'album'
+                    # Download full-size thumbnails
+                    thumbnails = attachment['thumbnails']
+                    if thumbnails
+                      thumbnails.each_index do |index|
+                        thumbnail = thumbnails[index]
+                        image = thumbnail['image']
+                        image_url = get_full_image_url(image['url'])
+                        puts "##{@@request_num}     Fetching attachment: #{image_url} ..." unless quiet
+                        uri = URI.parse(URI.escape("#{image_url}"))
+                        http = Net::HTTP.new(uri.host, uri.port)
+                        if http.port == 443
+                          http.use_ssl = true
+                          http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+                        end
+                        data = http.get(uri.request_uri)
+                        image_ext = uri.request_uri.split("/")[-1].split(".")[-1]
+                        image_ext = nil if image_ext.length > 4
+                        
+                        #<< attachment
+                        File.open("#{tmp_dir}/#{activity_id}_#{attachment['id']}[#{index}]#{image_ext ? ".#{image_ext}" : ""}", "w").puts data.body
+                      end
+                    end
+                    
+                  elsif attachment['objectType'] == 'video'
+                    # Download preview image
+                    image = attachment['image']
+                    image_url = get_full_image_url(image['url'])
                     puts "##{@@request_num}     Fetching attachment: #{image_url} ..." unless quiet
                     uri = URI.parse(URI.escape("#{image_url}"))
                     http = Net::HTTP.new(uri.host, uri.port)
@@ -160,27 +230,8 @@ module GooglePlusArchiver
                     
                     #<< attachment
                     File.open("#{tmp_dir}/#{activity_id}_#{attachment['id']}#{image_ext ? ".#{image_ext}" : ""}", "w").puts data.body
-                  end
-                  
-                  thumbnails = attachment['thumbnails']
-                  if thumbnails
-                    thumbnails.each_index do |index|
-                      thumbnail = thumbnails[index]
-                      image = thumbnail['image']
-                      puts "##{@@request_num}     Fetching attachment(thumbnail): #{image['url']} ..." unless quiet
-                      uri = URI.parse(URI.escape("#{image['url']}"))
-                      http = Net::HTTP.new(uri.host, uri.port)
-                      if http.port == 443
-                        http.use_ssl = true
-                        http.verify_mode = OpenSSL::SSL::VERIFY_NONE
-                      end
-                      data = http.get(uri.request_uri)
-                      image_ext = uri.request_uri.split("/")[-1].split(".")[-1]
-                      image_ext = nil if image_ext.length > 4
-                      
-                      #<< attachment
-                      File.open("#{tmp_dir}/#{activity_id}_#{attachment['id']}_#{index.to_s}#{image_ext ? ".#{image_ext}" : ""}", "w").puts data.body
-                    end
+                    
+                    #TODO: Download video
                   end
                 end
               end
