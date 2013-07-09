@@ -27,6 +27,10 @@ OptionParser.new do |opts|
     options[:output_path] = output_path
   end
   
+  opts.on("--post-limit [POST_LIMIT]" ,"Set the maximum number of posts to archive (in time descending order)") do |post_limit|
+    options[:post_limit] = post_limit
+  end
+  
   opts.on("--quiet", "Silent mode") do
     options[:quiet] = true
   end

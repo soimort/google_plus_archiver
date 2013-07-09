@@ -46,10 +46,11 @@ module GooglePlusArchiver
       return
     end
     
-    user_id, delay, output_path, quiet =
+    user_id, delay, output_path, post_limit, quiet =
       (params[:user_id]),
       (params[:delay] or 0.2),
       (params[:output_path] or FileUtils.pwd),
+      (params[:post_limit])
       (params[:quiet])
     
     Dir.mktmpdir do |tmp_dir|
@@ -87,8 +88,16 @@ module GooglePlusArchiver
         if not params[:exclude_posts]
           next_page_token = nil
           page_num = 0
+          posts_left = post_limit.to_i
+          
           loop do
             puts "##{@@request_num+=1} Fetching activities.list: page[#{page_num}] ..." unless quiet
+            if post_limit
+              maxResults = (posts_left > 100) ? 100 : posts_left
+              posts_left -= maxResults
+            else
+              maxResults = 100
+            end
             loop do
               begin
                 response = @@client.execute(
@@ -96,7 +105,7 @@ module GooglePlusArchiver
                   :parameters => {
                     'collection' => 'public',
                     'userId' => user_id,
-                    'maxResults' => '100',
+                    'maxResults' => maxResults.to_s,
                     'pageToken' => next_page_token
                   },
                   :authenticated => false
@@ -293,6 +302,8 @@ module GooglePlusArchiver
               end
               
             end
+            
+            break if post_limit and posts_left <= 0
             
             break unless next_page_token
             page_num += 1
