@@ -235,10 +235,13 @@ module GooglePlusArchiver
                     # Download video
                     puts "##{@@request_num}     Downloading video: #{attachment['url']} ..." unless quiet
                     FileUtils.mkdir("#{tmp_dir}/video")
-                    system("#{video_downloader} -o#{tmp_dir}/video #{attachment['url']}")
                     Dir.chdir("#{tmp_dir}/video") do
-                      Dir.glob("*").each do |video|
-                        FileUtils.mv(video, "#{tmp_dir}/#{activity_id}_#{attachment['id']}_#{attachment['displayName']}")
+                      if system("#{video_downloader} #{attachment['url']}")
+                        Dir.glob("*").each do |video|
+                          FileUtils.mv(video, "#{tmp_dir}/#{activity_id}_#{attachment['id']}_#{attachment['displayName'].split('/').join}.#{video.split('.')[-1]}")
+                        end
+                      else
+                        puts "##{@@request_num}     Video downloader failed. Download aborted."
                       end
                     end
                     FileUtils.rm_r("#{tmp_dir}/video")
