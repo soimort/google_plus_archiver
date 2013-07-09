@@ -1,5 +1,6 @@
 # google_plus_archiver
 
+[![Build Status](https://api.travis-ci.org/soimort/google_plus_archiver.png)](http://travis-ci.org/soimort/google_plus_archiver)
 [![Dependencies Status](https://gemnasium.com/soimort/google_plus_archiver.png)](https://gemnasium.com/soimort/google_plus_archiver)
 
 __google_plus_archiver__ is a simple command-line tool to archive Google+ profiles and public streams.
