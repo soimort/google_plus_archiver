@@ -60,8 +60,9 @@ module GooglePlusArchiver
       return
     end
     
-    user_id, delay, output_path, post_limit, quiet =
+    user_id, compress, delay, output_path, post_limit, quiet =
       (params[:user_id]),
+      (params[:compress]),
       (params[:delay] or 0.2),
       (params[:output_path] or FileUtils.pwd),
       (params[:post_limit])
@@ -368,23 +369,35 @@ module GooglePlusArchiver
         puts "Archiving interrupted due to unexpected errors."
         
       ensure
-        # Archive all the files
         archive_time = "#{Time.now.to_s[0..9]}-#{Time.now.to_s[11..-7]}#{Time.now.to_s[-5..-1]}"
-        archive_filename = "#{output_path}/#{user_display_name}_#{archive_time}.tar.gz"
-        FileUtils.cd(tmp_dir) do
-          
-          Tempfile.open("#{user_id}") do |tar|
-            files = []
-            Find.find("./") do |path|
-              files << File.basename(path) unless File.basename(path) == '.'
+        archive_dest = "#{output_path}/#{user_display_name}_#{archive_time}"
+        
+        FileUtils.mkdir_p(archive_dest)
+        FileUtils.cp_r("#{tmp_dir}/.", archive_dest)
+        
+        if compress
+          begin
+            archive_filename = "#{output_path}/#{user_display_name}_#{archive_time}.tar.gz"
+            FileUtils.cd(archive_dest) do
+              Tempfile.open("#{user_id}") do |tar|
+                files = []
+                Find.find("./") do |path|
+                  files << File.basename(path) unless File.basename(path) == '.'
+                end
+                Minitar.pack(files, tar)
+                
+                Zlib::GzipWriter.open(archive_filename) do |gz|
+                  gz.mtime = File.mtime(tar.path)
+                  gz.orig_name = tar.path
+                  gz.write IO.binread(tar.path)
+                end
+              end
             end
-            Minitar.pack(files, tar)
             
-            Zlib::GzipWriter.open(archive_filename) do |gz|
-              gz.mtime = File.mtime(tar.path)
-              gz.orig_name = tar.path
-              gz.write IO.binread(tar.path)
-            end
+            FileUtils.rm_r(archive_dest)
+          rescue Exception => e
+            puts e.message
+            puts "Compression failed."
           end
         end
       end

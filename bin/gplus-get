@@ -19,6 +19,10 @@ OptionParser.new do |opts|
     options[:user_id] = user_id
   end
   
+  opts.on("--compress", "Do compression") do
+    options[:compress] = true
+  end
+  
   opts.on("--delay [SECONDS]" ,"Delay (in seconds) between two requests (0.2 by default, since Google set a 5 requests/second/user limit)") do |delay|
     options[:delay] = delay
   end
