@@ -60,13 +60,14 @@ module GooglePlusArchiver
       return
     end
     
-    user_id, compress, delay, output_path, post_limit, quiet =
+    user_id, compress, delay, output_path, post_limit, quiet, video_downloader =
       (params[:user_id]),
       (params[:compress]),
       (params[:delay] or 0.2),
       (params[:output_path] or FileUtils.pwd),
-      (params[:post_limit])
-      (params[:quiet])
+      (params[:post_limit]),
+      (params[:quiet]),
+      (params[:video_downloader] or 'you-get')
     
     Dir.mktmpdir do |tmp_dir|
       begin
@@ -231,7 +232,16 @@ module GooglePlusArchiver
                     #<< attachment
                     File.open("#{tmp_dir}/#{activity_id}_#{attachment['id']}#{image_ext ? ".#{image_ext}" : ""}", "w").puts data.body
                     
-                    #TODO: Download video
+                    # Download video
+                    puts "##{@@request_num}     Downloading video: #{attachment['url']} ..." unless quiet
+                    FileUtils.mkdir("#{tmp_dir}/video")
+                    system("#{video_downloader} -o#{tmp_dir}/video #{attachment['url']}")
+                    Dir.chdir("#{tmp_dir}/video") do
+                      Dir.glob("*").each do |video|
+                        FileUtils.mv(video, "#{tmp_dir}/#{activity_id}_#{attachment['id']}_#{attachment['displayName']}")
+                      end
+                    end
+                    FileUtils.rm_r("#{tmp_dir}/video")
                   end
                 end
               end

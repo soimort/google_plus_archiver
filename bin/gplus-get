@@ -15,7 +15,7 @@ OptionParser.new do |opts|
     options[:api_key] = api_key
   end
   
-  opts.on("--user-id [USER_ID]" ,"Specify the ID of the user to be archived") do |user_id|
+  opts.on("--user-id [USER_ID]", "Specify the ID of the user to be archived") do |user_id|
     options[:user_id] = user_id
   end
   
@@ -23,20 +23,24 @@ OptionParser.new do |opts|
     options[:compress] = true
   end
   
-  opts.on("--delay [SECONDS]" ,"Delay (in seconds) between two requests (0.2 by default, since Google set a 5 requests/second/user limit)") do |delay|
+  opts.on("--delay [SECONDS]", "Delay (in seconds) between two requests (0.2 by default, since Google set a 5 requests/second/user limit)") do |delay|
     options[:delay] = delay
   end
   
-  opts.on("--output-path [OUTPUT_PATH]" ,"Output path (the current directory by default)") do |output_path|
+  opts.on("--output-path [OUTPUT_PATH]", "Output path (the current directory by default)") do |output_path|
     options[:output_path] = output_path
   end
   
-  opts.on("--post-limit [POST_LIMIT]" ,"Set the maximum number of posts to archive (in time descending order)") do |post_limit|
+  opts.on("--post-limit [POST_LIMIT]", "Maximum number of posts to archive (in time descending order)") do |post_limit|
     options[:post_limit] = post_limit
   end
   
   opts.on("--quiet", "Silent mode") do
     options[:quiet] = true
+  end
+  
+  opts.on("--video-downloader [VIDEO_DOWNLOADER]", "Command used to download Google+ videos (`you-get` by default)") do |video_downloader|
+    options[:video_downloader] = video_downloader
   end
   
   opts.on("--exclude-posts", "Don't archive posts") do
