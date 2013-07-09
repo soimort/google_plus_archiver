@@ -226,8 +226,7 @@ module GooglePlusArchiver
                       http.verify_mode = OpenSSL::SSL::VERIFY_NONE
                     end
                     data = http.get(uri.request_uri)
-                    image_ext = uri.request_uri.split("/")[-1].split(".")[-1]
-                    image_ext = nil if image_ext.length > 4
+                    image_ext = 'gif'
                     
                     #<< attachment
                     File.open("#{tmp_dir}/#{activity_id}_#{attachment['id']}#{image_ext ? ".#{image_ext}" : ""}", "w").puts data.body
