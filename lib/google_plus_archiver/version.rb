@@ -1,4 +1,4 @@
 module GooglePlusArchiver
-  VERSION       = "0.0.1"
-  DATE          = "2012-12-18"
+  VERSION       = "0.0.2"
+  DATE          = "2013-07-10"
 end
