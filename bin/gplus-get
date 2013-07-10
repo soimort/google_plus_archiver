@@ -63,7 +63,7 @@ OptionParser.new do |opts|
     options[:exclude_resharers] = true
   end
   
-  opts.on("--version", "Display current version") do
+  opts.on("-V", "--version", "Display current version") do
     puts "google_plus_archiver #{GooglePlusArchiver::VERSION}"
     exit 0
   end
