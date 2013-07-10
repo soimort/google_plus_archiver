@@ -94,7 +94,7 @@ module GooglePlusArchiver
         end
         
         #<< profile
-        File.open("#{tmp_dir}/profile.json", "w") do |f|
+        File.open("#{File.join(tmp_dir, 'profile.json')}", "w") do |f|
           f.puts response.body
         end
         
@@ -138,7 +138,7 @@ module GooglePlusArchiver
             next_page_token = activities['nextPageToken']
             
             #<< posts
-            File.open("#{tmp_dir}/posts[#{page_num}].json", "w") do |f|
+            File.open("#{File.join(tmp_dir, 'posts')}[#{page_num}].json", "w") do |f|
               f.puts response.body
             end
             
@@ -148,7 +148,7 @@ module GooglePlusArchiver
               puts "##{@@request_num}   Fetching activities.get: #{activity_id}" unless quiet
               
               #<< post
-              File.open("#{tmp_dir}/#{activity_id}.json", "w") do |f|
+              File.open("#{File.join(tmp_dir, activity_id)}.json", "w") do |f|
                 f.puts item.to_json
               end
               
@@ -172,7 +172,7 @@ module GooglePlusArchiver
                       image_ext = nil if image_ext.length > 4
                       
                       #<< attachment
-                      File.open("#{tmp_dir}/#{activity_id}_#{attachment['id']}#{image_ext ? ".#{image_ext}" : ""}", "w").puts data.body
+                      File.open("#{File.join(tmp_dir, activity_id)}_#{attachment['id']}#{image_ext ? ".#{image_ext}" : ""}", "w").puts data.body
                     rescue
                       image = attachment['image']
                       image_url = get_full_image_url(image['url'])
@@ -188,7 +188,7 @@ module GooglePlusArchiver
                       image_ext = nil if image_ext.length > 4
                       
                       #<< attachment
-                      File.open("#{tmp_dir}/#{activity_id}_#{attachment['id']}#{image_ext ? ".#{image_ext}" : ""}", "w").puts data.body
+                      File.open("#{File.join(tmp_dir, activity_id)}_#{attachment['id']}#{image_ext ? ".#{image_ext}" : ""}", "w").puts data.body
                     end
                     
                   elsif attachment['objectType'] == 'album'
@@ -211,7 +211,7 @@ module GooglePlusArchiver
                         image_ext = nil if image_ext.length > 4
                         
                         #<< attachment
-                        File.open("#{tmp_dir}/#{activity_id}_#{attachment['id']}[#{index}]#{image_ext ? ".#{image_ext}" : ""}", "w").puts data.body
+                        File.open("#{File.join(tmp_dir, activity_id)}_#{attachment['id']}[#{index}]#{image_ext ? ".#{image_ext}" : ""}", "w").puts data.body
                       end
                     end
                     
@@ -230,21 +230,21 @@ module GooglePlusArchiver
                     image_ext = 'gif'
                     
                     #<< attachment
-                    File.open("#{tmp_dir}/#{activity_id}_#{attachment['id']}#{image_ext ? ".#{image_ext}" : ""}", "w").puts data.body
+                    File.open("#{File.join(tmp_dir, activity_id)}_#{attachment['id']}#{image_ext ? ".#{image_ext}" : ""}", "w").puts data.body
                     
                     # Download video
                     puts "##{@@request_num}     Downloading video: #{attachment['url']} ..." unless quiet
-                    FileUtils.mkdir("#{tmp_dir}/video")
-                    Dir.chdir("#{tmp_dir}/video") do
+                    FileUtils.mkdir("#{File.join(tmp_dir, 'video')}")
+                    Dir.chdir("#{File.join(tmp_dir, 'video')}") do
                       if system("#{video_downloader} #{attachment['url']}")
                         Dir.glob("*").each do |video|
-                          FileUtils.mv(video, "#{tmp_dir}/#{activity_id}_#{attachment['id']}_#{attachment['displayName'].split('/').join}.#{video.split('.')[-1]}")
+                          FileUtils.mv(video, "#{File.join(tmp_dir, activity_id)}_#{attachment['id']}_#{attachment['displayName'].split('/').join}.#{video.split('.')[-1]}")
                         end
                       else
                         puts "##{@@request_num}     Video downloader failed. Download aborted."
                       end
                     end
-                    FileUtils.rm_r("#{tmp_dir}/video")
+                    FileUtils.rm_r("#{File.join(tmp_dir, 'video')}")
                   end
                 end
               end
@@ -277,7 +277,7 @@ module GooglePlusArchiver
                   replies_next_page_token = JSON.parse(response.body)['nextPageToken']
                   
                   #<< replies
-                  File.open("#{tmp_dir}/#{activity_id}_replies#{replies_page_num == 0 && !replies_next_page_token ? "" : "[#{replies_page_num}]"}.json", "w") do |f|
+                  File.open("#{File.join(tmp_dir, activity_id)}_replies#{replies_page_num == 0 && !replies_next_page_token ? "" : "[#{replies_page_num}]"}.json", "w") do |f|
                     f.puts response.body
                   end
                   
@@ -316,7 +316,7 @@ module GooglePlusArchiver
                   plusoners_next_page_token = JSON.parse(response.body)['nextPageToken']
                   
                   #<< plusoners
-                  File.open("#{tmp_dir}/#{activity_id}_plusoners#{plusoners_page_num == 0 && !plusoners_next_page_token ? "" : "[#{plusoners_page_num}]"}.json", "w") do |f|
+                  File.open("#{File.join(tmp_dir, activity_id)}_plusoners#{plusoners_page_num == 0 && !plusoners_next_page_token ? "" : "[#{plusoners_page_num}]"}.json", "w") do |f|
                     f.puts response.body
                   end
                   
@@ -355,7 +355,7 @@ module GooglePlusArchiver
                   resharers_next_page_token = JSON.parse(response.body)['nextPageToken']
                   
                   #<< resharers
-                  File.open("#{tmp_dir}/#{activity_id}_resharers#{replies_page_num == 0 && !resharers_next_page_token ? "" : "[#{resharers_page_num}]"}.json", "w") do |f|
+                  File.open("#{File.join(tmp_dir, activity_id)}_resharers#{replies_page_num == 0 && !resharers_next_page_token ? "" : "[#{resharers_page_num}]"}.json", "w") do |f|
                     f.puts response.body
                   end
                   
@@ -382,14 +382,14 @@ module GooglePlusArchiver
         
       ensure
         archive_time = "#{Time.now.to_s[0..9]}-#{Time.now.to_s[11..-7]}#{Time.now.to_s[-5..-1]}"
-        archive_dest = "#{output_path}/#{user_display_name}_#{archive_time}"
+        archive_dest = "#{File.join(output_path, user_display_name)}_#{archive_time}"
         
         FileUtils.mkdir_p(archive_dest)
-        FileUtils.cp_r("#{tmp_dir}/.", archive_dest)
+        FileUtils.cp_r("#{File.join(tmp_dir, '.')}", archive_dest)
         
         if compress
           begin
-            archive_filename = "#{output_path}/#{user_display_name}_#{archive_time}.tar.gz"
+            archive_filename = "#{File.join(output_path, user_display_name)}_#{archive_time}.tar.gz"
             FileUtils.cd(archive_dest) do
               Tempfile.open("#{user_id}") do |tar|
                 files = []
