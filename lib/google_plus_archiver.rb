@@ -415,4 +415,79 @@ module GooglePlusArchiver
       end
     end
   end
+  
+  def self.fetch_post_image(params)
+    begin
+      raise "Unregistered client." unless client_registered?
+    rescue => e
+      puts e.message
+      return
+    end
+    
+    activity_id, output_path =
+      (params[:activity_id]),
+      (params[:output_path] or FileUtils.pwd)
+    
+    response = @@client.execute(
+      :api_method => @@plus.activities.get,
+      :parameters => {
+        'activityId' => activity_id,
+        'fields' => 'object/attachments'
+      },
+      :authenticated => false
+    )
+    
+    attachments = JSON.parse(response.body)['object']['attachments']
+    attachments.each do |attachment|
+      if attachment['objectType'] == 'photo'
+        image = attachment['fullImage']
+        image_url = get_full_image_url(image['url'])
+        puts "Downloading image: #{image_url} ..."
+        uri = URI.parse(URI.escape("#{image_url}"))
+        http = Net::HTTP.new(uri.host, uri.port)
+        if http.port == 443
+          http.use_ssl = true
+          http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+        end
+        data = http.get(uri.request_uri)
+        
+        m = data.header['Content-Disposition'].match(/filename="([^"]+)"/)
+        if m
+          extname = m[1]
+        else
+          extname = data.header['Content-Type'].split('/')[-1]
+        end
+        
+        File.open("#{File.join(output_path, activity_id)}.#{extname}", "w").puts data.body
+        
+      elsif attachment['objectType'] == 'album'
+        thumbnails = attachment['thumbnails']
+        if thumbnails
+          thumbnails.each_index do |index|
+            thumbnail = thumbnails[index]
+            image = thumbnail['image']
+            image_url = get_full_image_url(image['url'])
+            puts "Downloading image: #{image_url} ..."
+            uri = URI.parse(URI.escape("#{image_url}"))
+            http = Net::HTTP.new(uri.host, uri.port)
+            if http.port == 443
+              http.use_ssl = true
+              http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+            end
+            data = http.get(uri.request_uri)
+            
+            m = data.header['Content-Disposition'].match(/filename="([^"]+)"/)
+            if m
+              extname = m[1]
+            else
+              extname = data.header['Content-Type'].split('/')[-1]
+            end
+            
+            File.open("#{File.join(output_path, activity_id)}[#{index}].#{extname}", "w").puts data.body
+          end
+        end
+      end
+    end
+  end
+  
 end

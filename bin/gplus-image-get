@@ -1,0 +1,62 @@
+#!/usr/bin/env ruby
+
+$LOAD_PATH.unshift File.dirname(__FILE__) + "/../lib"
+
+require 'google_plus_archiver'
+require 'google_plus_archiver/version.rb'
+
+require 'optparse'
+require 'net/http'
+
+options = {}
+OptionParser.new do |opts|
+  opts.banner = "Usage: gplus-image-get -a [API_KEY] [POST_URL]"
+  
+  opts.on("--api-key [API_KEY]", "Specify the Google API key") do |api_key|
+    options[:api_key] = api_key
+  end
+  
+  opts.on("--output-path [OUTPUT_PATH]", "Output path (the current directory by default)") do |output_path|
+    options[:output_path] = output_path
+  end
+  
+  opts.on("-x", "--proxy [PROXY]", "Use proxy on given port") do |proxy|
+    options[:proxy] = proxy
+  end
+  
+  opts.on("-V", "--version", "Display current version") do
+    puts "google_plus_archiver #{GooglePlusArchiver::VERSION}"
+    exit 0
+  end
+  
+end.parse!
+
+if not options[:api_key] or ARGV.empty?
+  puts "You must specify both the post URL and your Google API key (-a)."
+  exit 0
+end
+
+proxy_addr, proxy_port = options[:proxy].split(':') if options[:proxy]
+
+GooglePlusArchiver::register_client(options[:api_key])
+if not GooglePlusArchiver::client_registered?
+  puts "Client registration failed."
+  exit 0
+end
+
+ARGV.each do |url|
+  uri = URI.parse(URI.escape("#{url}"))
+  if options[:proxy]
+    http = Net::HTTP.new(uri.host, uri.port, proxy_addr, proxy_port)
+  else
+    http = Net::HTTP.new(uri.host, uri.port)
+  end
+  if http.port == 443
+    http.use_ssl = true
+    http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+  end
+  data = http.get(uri.request_uri)
+  
+  activity_id = data.body.match(/<div id="update-([^"]+)"/)[1]
+  GooglePlusArchiver::fetch_post_image(:activity_id => activity_id, :output_path => options[:output_path])
+end

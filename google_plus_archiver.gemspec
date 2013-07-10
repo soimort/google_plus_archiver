@@ -16,7 +16,7 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency("google-api-client", "~> 0.5")
   s.add_runtime_dependency("archive-tar-minitar", "~> 0.5")
   
-  s.executables = ["gplus-get"]
+  s.executables = ["gplus-get", "gplus-image-get"]
   
   # = MANIFEST =
   s.files       = %w[
