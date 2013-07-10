@@ -76,6 +76,9 @@ if not options[:api_key] or not options[:user_id]
 end
 
 GooglePlusArchiver::register_client(options[:api_key])
-if GooglePlusArchiver::client_registered?
-  GooglePlusArchiver::archive_user(options)
+if not GooglePlusArchiver::client_registered?
+  puts "Client registration failed."
+  exit 0
 end
+
+GooglePlusArchiver::archive_user(options)
