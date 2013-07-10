@@ -31,6 +31,8 @@ OptionParser.new do |opts|
   
 end.parse!
 
+options[:api_key] = ENV['GOOGLE_API_KEY'] if not options[:api_key]
+
 if not options[:api_key] or ARGV.empty?
   puts "You must specify both the post URL and your Google API key (-a)."
   exit 0
