@@ -229,8 +229,10 @@ module GooglePlusArchiver
                     data = http.get(uri.request_uri)
                     image_ext = 'gif'
                     
+                    extname = data.header['Content-Type'].split('/')[-1]
+                    
                     #<< attachment
-                    File.open("#{File.join(tmp_dir, activity_id)}_#{attachment['id']}#{image_ext ? ".#{image_ext}" : ""}", "w").puts data.body
+                    File.open("#{File.join(tmp_dir, activity_id)}_#{attachment['id']}.#{extname}", "w").puts data.body
                     
                     # Download video
                     puts "##{@@request_num}     Downloading video: #{attachment['url']} ..." unless quiet
