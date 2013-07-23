@@ -235,18 +235,20 @@ module GooglePlusArchiver
                     File.open("#{File.join(tmp_dir, activity_id)}_#{attachment['id']}.#{extname}", "w").puts data.body
                     
                     # Download video
-                    puts "##{@@request_num}     Downloading video: #{attachment['url']} ..." unless quiet
-                    FileUtils.mkdir("#{File.join(tmp_dir, 'video')}")
-                    Dir.chdir("#{File.join(tmp_dir, 'video')}") do
-                      if system("#{video_downloader} #{attachment['url']}")
-                        Dir.glob("*").each do |video|
-                          FileUtils.mv(video, "#{File.join(tmp_dir, activity_id)}_#{attachment['id']}_#{attachment['displayName'].split('/').join}.#{video.split('.')[-1]}")
+                    if attachment['url'] !~ /^http:\/\/www.youtube.com\//
+                      puts "##{@@request_num}     Downloading video: #{attachment['url']} ..." unless quiet
+                      FileUtils.mkdir("#{File.join(tmp_dir, 'video')}")
+                      Dir.chdir("#{File.join(tmp_dir, 'video')}") do
+                        if system("#{video_downloader} #{attachment['url']}")
+                          Dir.glob("*").each do |video|
+                            FileUtils.mv(video, "#{File.join(tmp_dir, activity_id)}_#{attachment['id']}_#{attachment['displayName'].split('/').join}.#{video.split('.')[-1]}")
+                          end
+                        else
+                          puts "##{@@request_num}     Video downloader failed. Download aborted."
                         end
-                      else
-                        puts "##{@@request_num}     Video downloader failed. Download aborted."
                       end
+                      FileUtils.rm_r("#{File.join(tmp_dir, 'video')}")
                     end
-                    FileUtils.rm_r("#{File.join(tmp_dir, 'video')}")
                   end
                 end
               end
