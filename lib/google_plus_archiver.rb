@@ -29,8 +29,8 @@ module GooglePlusArchiver
     @@request_num = 0
     begin
       @@plus = @@client.discovered_api('plus')
-    rescue
-      puts "Invalid Google API key."
+    rescue Exception => e
+      puts e
     end
   end
   
