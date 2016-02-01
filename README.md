@@ -1,3 +1,5 @@
+**[OBSOLETE] As of 1 Feb 2016, this project is unmaintained. See [soimort/dotfiles](https://github.com/soimort/dotfiles/blob/master/Scripts/gugutasu) for the script I use to archive Google+ posts.**
+
 # google_plus_archiver
 
 [![Build Status](https://api.travis-ci.org/soimort/google_plus_archiver.png)](http://travis-ci.org/soimort/google_plus_archiver)
